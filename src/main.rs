@@ -3,8 +3,13 @@
 //! This will blink an LED attached to GP25, which is the pin the Pico uses for the on-board LED.
 #![no_std]
 #![no_main]
+#![feature(alloc_error_handler)]
 
-//use bsp::entry;
+extern crate alloc;
+
+use alloc::vec::Vec;
+use alloc_cortex_m::CortexMHeap;
+use core::alloc::Layout;
 use cortex_m_rt::entry;
 use defmt::*;
 use defmt_rtt as _;
@@ -24,8 +29,18 @@ use rp2040_hal::{clocks::init_clocks_and_plls, clocks::Clock, pac, sio::Sio, wat
 #[used]
 pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
 
+#[global_allocator]
+static ALLOCATOR: CortexMHeap = CortexMHeap::empty();
+
 #[entry]
 fn main() -> ! {
+    // Initialize the allocator BEFORE you use it
+    {
+        use core::mem::MaybeUninit;
+        const HEAP_SIZE: usize = 1024;
+        static mut HEAP: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
+        unsafe { ALLOCATOR.init(HEAP.as_ptr() as usize, HEAP_SIZE) }
+    }
     info!("Program start");
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
@@ -57,6 +72,9 @@ fn main() -> ! {
 
     let mut led_pin = pins.gpio25.into_push_pull_output();
 
+    let mut xs = Vec::new();
+    xs.push(1);
+
     loop {
         info!("on!");
         led_pin.set_high().unwrap();
@@ -65,6 +83,11 @@ fn main() -> ! {
         led_pin.set_low().unwrap();
         delay.delay_ms(500);
     }
+}
+
+#[alloc_error_handler]
+fn oom(_: Layout) -> ! {
+    loop {}
 }
 
 // End of file
