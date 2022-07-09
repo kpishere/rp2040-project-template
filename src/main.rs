@@ -4,12 +4,13 @@
 #![no_std]
 #![no_main]
 #![feature(alloc_error_handler)]
+#![feature(allocator_api)]
 
 extern crate alloc;
 
-use alloc::vec::Vec;
 use alloc_cortex_m::CortexMHeap;
 use core::alloc::Layout;
+use core::mem::MaybeUninit;
 use cortex_m_rt::entry;
 use defmt::*;
 use defmt_rtt as _;
@@ -31,17 +32,20 @@ pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
 
 #[global_allocator]
 static ALLOCATOR: CortexMHeap = CortexMHeap::empty();
+const HEAP_SIZE: usize = 1024 * 16;
+static mut HEAP: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
+
+// Green threads
+use corosensei::stack::MIN_STACK_SIZE;
+use corosensei::{Coroutine, CoroutineResult};
+
+mod pico;
 
 #[entry]
 fn main() -> ! {
-    // Initialize the allocator BEFORE you use it
-    {
-        use core::mem::MaybeUninit;
-        const HEAP_SIZE: usize = 1024;
-        static mut HEAP: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
-        unsafe { ALLOCATOR.init(HEAP.as_ptr() as usize, HEAP_SIZE) }
-    }
-    info!("Program start");
+    info!("Program setup");
+    unsafe { ALLOCATOR.init(HEAP.as_ptr() as usize, HEAP_SIZE) }
+
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
     let mut watchdog = Watchdog::new(pac.WATCHDOG);
@@ -72,10 +76,29 @@ fn main() -> ! {
 
     let mut led_pin = pins.gpio25.into_push_pull_output();
 
-    let mut xs = Vec::new();
-    xs.push(1);
+    let stack: pico::DefaultStack = pico::DefaultStack::new(MIN_STACK_SIZE).unwrap();
+    let mut coroutine = Coroutine::with_stack(stack, |yielder, input| {
+        info!("[coroutine] coroutine started with input {}", input);
+        for i in 0..5 {
+            info!("[coroutine] yielding {}", i);
+            let input: i32 = yielder.suspend(i);
+            info!("[coroutine] got {} from parent", input)
+        }
+        info!("[coroutine] exiting coroutine");
+    });
+    let mut counter = 100;
+    let mut completed = false;
 
     loop {
+        if !completed {
+            info!("[main] resuming coroutine with argument {}", counter);
+            match coroutine.resume(counter) {
+                CoroutineResult::Yield(i) => info!("[main] got {:?} from coroutine", i),
+                CoroutineResult::Return(()) => completed = true,
+            }
+            counter += 1;
+        }
+
         info!("on!");
         led_pin.set_high().unwrap();
         delay.delay_ms(500);

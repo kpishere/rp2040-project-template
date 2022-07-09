@@ -34,7 +34,7 @@
             "postLaunchCommands": [
                 "monitor rtt server start 8765 0",
                 // should span the *right* part of RAM
-                "monitor rtt setup 0x2003fbc0 0x30 \"SEGGER RTT\"",
+                "monitor rtt setup 0x2003bba8 0x30 \"SEGGER RTT\"",
                 "monitor rtt start",
                 //                "set print asm-demangle on",
                 //                "set backtrace limit 32",

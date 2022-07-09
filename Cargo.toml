@@ -16,6 +16,7 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 rp2040-hal = { version="0.5", features=["rt"] }
 rp2040-boot2 = "0.2"
 alloc-cortex-m = "0.4.2"
+corosensei = { path = "../corosensei", default-features = false } 
 
 # cargo build/run
 [profile.dev]

@@ -12,4 +12,7 @@ SECTIONS {
     {
         KEEP(*(.boot2));
     } > BOOT2
+    /DISCARD/ : {
+        *(.ARM.extab* .gnu.linkonce.armextab.* .ARM.exidx* .gnu.linkonce.armexidx.*)
+    }
 } INSERT BEFORE .text;
