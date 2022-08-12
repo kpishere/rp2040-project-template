@@ -7,10 +7,12 @@
 #![feature(allocator_api)]
 
 extern crate alloc;
+mod pico;
 
 use alloc_cortex_m::CortexMHeap;
 use core::alloc::Layout;
 use core::mem::MaybeUninit;
+use corosensei::{stack::MIN_STACK_SIZE, Coroutine, CoroutineResult};
 use cortex_m_rt::entry;
 use defmt::*;
 use defmt_rtt as _;
@@ -35,17 +37,11 @@ static ALLOCATOR: CortexMHeap = CortexMHeap::empty();
 const HEAP_SIZE: usize = 1024 * 16;
 static mut HEAP: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
 
-// Green threads
-use corosensei::stack::MIN_STACK_SIZE;
-use corosensei::{Coroutine, CoroutineResult};
-
-mod pico;
-
 #[entry]
 fn main() -> ! {
-    info!("Program setup");
+    // Initialize the allocator BEFORE you use it
     unsafe { ALLOCATOR.init(HEAP.as_ptr() as usize, HEAP_SIZE) }
-
+    info!("Program start");
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
     let mut watchdog = Watchdog::new(pac.WATCHDOG);

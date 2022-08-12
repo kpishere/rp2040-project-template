@@ -16,7 +16,10 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 rp2040-hal = { version="0.5", features=["rt"] }
 rp2040-boot2 = "0.2"
 alloc-cortex-m = "0.4.2"
-corosensei = { path = "../corosensei", default-features = false } 
+corosensei = { path = "../corosensei", default-features = false }
+rp-pico = "0.4.1"
+#tinyusb-sys = { version = "0.1", features = ["device", "cdc", "rp2040"] }
+tinyusb-sys = { path = "../tinyusb-sys-rs", features = ["device", "cdc", "rp2040"]}
 
 # cargo build/run
 [profile.dev]
