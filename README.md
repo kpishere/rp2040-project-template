@@ -265,3 +265,18 @@ under these terms.
 
 Raise an issue: [https://github.com/rp-rs/rp2040-project-template/issues](https://github.com/rp-rs/rp2040-project-template/issues)
 Chat to us on Matrix: [#rp-rs:matrix.org](https://matrix.to/#/#rp-rs:matrix.org)
+
+## Extra user config for macos
+Create a conveniant bash script to executed to start openocd debugging server.
+
+openocd_pico.sh:
+  #!/bin/sh
+  openocd -f ~/pico.ocd
+
+pico.ocd:
+  source [find /interface/jlink.cfg]
+
+  transport select swd 
+  adapter speed 10000
+
+  source [find target/rp2040.cfg]

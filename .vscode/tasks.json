@@ -35,6 +35,16 @@
                 "isDefault": true
             },
             "dependsOn": "Cargo build"
+        },
+        {
+            "label": "Run logging",
+            "type": "shell",
+            "command": "./logging.sh",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
         }
     ]
 }

@@ -13,9 +13,9 @@
             "preLaunchTask": "Build binary",
             "servertype": "openocd",
             // This may need to be gdb-multiarch depending on your system (i.e. Linux vs Mac)
-            "gdbPath": "arm-none-eabi-gdb",
+            "gdbPath": "/usr/local/bin/arm-none-eabi-gdb",
             // Connect to an already running OpenOCD instance
-            "gdbTarget": "localhost:50000",
+            "gdbTarget": ":3333",
             // If you have the Pico SDK installed, allows the
             // display of the RP2040 CPU registers in VS Code
             "svdFile": "${env:PICO_SDK_PATH}/src/rp2040/hardware_regs/rp2040.svd",
@@ -32,22 +32,26 @@
             ],
             // NOTE requires openOCD 0.11.0+
             "postLaunchCommands": [
-                "monitor rtt server start 8765 0",
-                // should span the *right* part of RAM
                 "monitor rtt setup 0x2003bba8 0x30 \"SEGGER RTT\"",
                 "monitor rtt start",
+                "monitor rtt server start 8765 0",
+                // should span the *right* part of RAM
+                // use this at root of project to get this number:
+                //   rust-nm -S target/thumbv6m-none-eabi/debug/rp2040-project-template | grep _SEGGER_RTT
                 //                "set print asm-demangle on",
                 //                "set backtrace limit 32",
                 //                "break DefaultHandler",
                 //                "break HardFault",
                 //                "define cll",
-                //                "target extended-remote :50000",
+                //                "target extended-remote :3333",
                 //                "load",
                 //                "monitor reset init",
                 //                "end",
                 //                "define mri",
                 //                "monitor reset init",
                 //                "end"
+                // In terminal window, run the following command to capture logging info :
+                //   nc localhost 8765 | defmt-print -e target/thumbv6m-none-eabi/debug/rp2040-project-template
             ],
             "configFiles": [
                 // Absolute path to your ocd settings
@@ -60,6 +64,7 @@
                 //    "adapter speed 10000",
                 //    "source [find target/rp2040.cfg]"
             ],
+            "showDevDebugOutput": "both", // Shows output of GDB, helpful when something is not working right
         },
         {
             "cwd": "${workspaceRoot}",
@@ -67,9 +72,9 @@
             "request": "attach",
             "type": "cortex-debug",
             "servertype": "external",
-            "gdbTarget": ":50000",
+            "gdbTarget": ":3333",
             "executable": "${workspaceFolder}/target/thumbv6m-none-eabi/debug/rp2040-project-template",
-            "gdbPath": "arm-none-eabi-gdb", // or gdb or multiarch-gdb
+            "gdbPath": "/usr/local/bin/arm-none-eabi-gdb", // or gdb or multiarch-gdb
             "svdFile": "${env:PICO_SDK_PATH}/src/rp2040/hardware_regs/rp2040.svd",
         }
     ]
