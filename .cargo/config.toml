@@ -20,6 +20,7 @@ rustflags = [
 
 [build]
 target = "thumbv6m-none-eabi"
+#target = "thumbv7m-none-eabi"    # Cortex-M3
 
 [env]
 DEFMT_LOG = "debug"

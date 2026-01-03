@@ -3,36 +3,96 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "preLaunchTask": "rust: cargo build",
-            "type": "probe-rs-debug",
+            "name": "Debug target",
             "request": "launch",
-            "name": "rp2040-project",
-            "cwd": "${workspaceFolder}",
-            "chip": "rp2040",
-            // RP2040 doesn't support connectUnderReset
-            "connectUnderReset": false,
-            "speed": 4000,
-            "runtimeExecutable": "probe-rs",
-            "runtimeArgs": [
-                "dap-server"
+            "type": "cortex-debug",
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceFolder}/target/thumbv6m-none-eabi/debug/rp2040-project-template",
+            // Don't auto-run, building is so slow!
+            //"preLaunchTask": "Build binary",
+            "servertype": "openocd",
+            /* Run `cargo build --example hello` and uncomment this line to run semi-hosting example */
+            //"executable": "./target/thumbv7m-none-eabi/debug/examples/hello",
+            //"cpu": "cortex-m3",
+            //"machine": "lm3s6965evb",
+            // This may need to be gdb-multiarch depending on your system (i.e. Linux vs Mac)
+            "gdbPath": "/usr/local/bin/arm-none-eabi-gdb",
+            // Connect to an already running OpenOCD instance
+            "gdbTarget": ":3333",
+            // If you have the Pico SDK installed, allows the
+            // display of the RP2040 CPU registers in VS Code
+            "svdFile": "${env:PICO_SDK_PATH}/src/rp2040/hardware_regs/rp2040.svd",
+            "runToEntryPoint": "main",
+            "preLaunchCommands": [
+                "monitor init",
+                "monitor reset init",
+                "monitor halt",
             ],
-            "flashingConfig": {
-                "flashingEnabled": true,
-                "haltAfterReset": false
-            },
-            "coreConfigs": [
-                {
-                    "coreIndex": 0,
-                    "programBinary": "target/thumbv6m-none-eabi/debug/rp2040-project-template",
-                    "rttEnabled": true
-                    // Uncomment this if you've downloaded the SVD from
-                    // https://github.com/raspberrypi/pico-sdk/raw/1.3.1/src/rp2040/hardware_regs/rp2040.svd
-                    // and placed it in the .vscode directory
-                    // "svdFile": "./.vscode/rp2040.svd",
-                }
+            // Work around for stopping at main on restart
+            "postRestartCommands": [
+                "break main",
+                "continue"
             ],
-            "consoleLogLevel": "Info", //Error, Warn, Info, Debug, Trace
-            "wireProtocol": "Swd"
-        }
+            // NOTE requires openOCD 0.11.0+
+            "postLaunchCommands": [
+                "monitor rtt setup 0x00000030 0x30 \"SEGGER RTT\"",
+                "monitor rtt start",
+                "monitor rtt server start 8765 0",
+                // should span the *right* part of RAM
+                // use this at root of project to get this number:
+                //   rust-nm -S target/thumbv6m-none-eabi/debug/rp2040-project-template | grep _SEGGER_RTT
+                //                "set print asm-demangle on",
+                //                "set backtrace limit 32",
+                //                "break DefaultHandler",
+                //                "break HardFault",
+                //                "define cll",
+                //                "target extended-remote :3333",
+                //                "load",
+                //                "monitor reset init",
+                //                "end",
+                //                "define mri",
+                //                "monitor reset init",
+                //                "end"
+                // In terminal window, run the following command to capture logging info :
+                //   nc localhost 8765 | defmt-print -e target/thumbv6m-none-eabi/debug/klipim
+                // If not working, process likely using port, use the following to identify process
+                //   lsof -i :8765
+            ],
+            "configFiles": [
+                // Absolute path to your ocd settings
+                "${userHome}/pico.ocd"
+            ],
+            // .. so use this instead of the interface in `configFiles`
+            "openOCDPreConfigLaunchCommands": [
+                //    "source [find /interface/jlink.cfg]",
+                //    "transport select swd",
+                //    "adapter speed 10000",
+                //    "source [find target/rp2040.cfg]"
+            ],
+            "showDevDebugOutput": "both", // Shows output of GDB, helpful when something is not working right
+        },
+        {
+            "cwd": "${workspaceRoot}",
+            "name": "Attach Debug",
+            "request": "attach",
+            "type": "cortex-debug",
+            "servertype": "external",
+            "gdbTarget": ":3333",
+            "executable": "${workspaceFolder}/target/thumbv6m-none-eabi/debug/rp2040-project-template",
+            "gdbPath": "/usr/local/bin/arm-none-eabi-gdb", // or gdb or multiarch-gdb
+            "svdFile": "${env:PICO_SDK_PATH}/src/rp2040/hardware_regs/rp2040.svd",
+        },
+        {
+            "useExtendedRemote": true,
+            "name": "Attach to QEMU (GDB Remote)",
+            "type": "cppdbg",
+            "request": "attach",
+            "MIMode": "gdb",
+            "miDebuggerServerAddress": ":3333",
+            "miDebuggerPath": "/usr/local/bin/arm-none-eabi-gdb",
+            //"program": "${workspaceFolder}/RapidPatch/VulDevices/qemu-stm32-p103/build/arm-start.elf",
+            //"cwd": "${workspaceRoot}",
+            "program": "${workspaceFolder}/target/thumbv7m-none-eabi/debug/rp2040-project-template", // Host machine not container, the exe/out file path
+        },
     ]
 }
