@@ -7,7 +7,8 @@
 use bsp::entry;
 use defmt::*;
 use defmt_rtt as _;
-use embedded_hal::digital::OutputPin;
+//use embedded_hal::digital::OutputPin;
+use embedded_hal::digital::StatefulOutputPin;
 use panic_probe as _;
 
 // Provide an alias for our BSP so we can switch targets quickly.
@@ -44,7 +45,7 @@ fn main() -> ! {
     .ok()
     .unwrap();
 
-    let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
+    //let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
 
     let pins = bsp::Pins::new(
         pac.IO_BANK0,
@@ -62,15 +63,122 @@ fn main() -> ! {
     // If you have a Pico W and want to toggle a LED with a simple GPIO output pin, you can connect an external
     // LED to one of the GPIO pins, and reference that pin here. Don't forget adding an appropriate resistor
     // in series with the LED.
-    let mut led_pin = pins.led.into_push_pull_output();
+    let mut gpio0 = pins.gpio0.into_push_pull_output();
+    let mut gpio1 = pins.gpio1.into_push_pull_output();
+    let mut gpio2 = pins.gpio2.into_push_pull_output();
+    let mut gpio3 = pins.gpio3.into_push_pull_output();
+    let mut gpio4 = pins.gpio4.into_push_pull_output();
+    let mut gpio5 = pins.gpio5.into_push_pull_output();
+    let mut gpio6 = pins.gpio6.into_push_pull_output();
+    let mut gpio7 = pins.gpio7.into_push_pull_output();
+    let mut gpio8 = pins.gpio8.into_push_pull_output();
+    let mut gpio9 = pins.gpio9.into_push_pull_output();
+    let mut gpio10 = pins.gpio10.into_push_pull_output();
+    let mut gpio11 = pins.gpio11.into_push_pull_output();
+    let mut gpio12 = pins.gpio12.into_push_pull_output();
+    let mut gpio13 = pins.gpio13.into_push_pull_output();
+    let mut gpio14 = pins.gpio14.into_push_pull_output();
+    let mut gpio15 = pins.gpio15.into_push_pull_output();
+    let mut gpio16 = pins.gpio16.into_push_pull_output();
+    let mut gpio17 = pins.gpio17.into_push_pull_output();
+    let mut gpio18 = pins.gpio18.into_push_pull_output();
+    let mut gpio19 = pins.gpio19.into_push_pull_output();
+    let mut gpio20 = pins.gpio20.into_push_pull_output();
+    let mut gpio21 = pins.gpio21.into_push_pull_output();
+    let mut gpio22 = pins.gpio22.into_push_pull_output();
 
+    let mut led = pins.led.into_push_pull_output();
+    let mut gpio26 = pins.gpio26.into_push_pull_output();
+    let mut gpio27 = pins.gpio27.into_push_pull_output();
+    let mut gpio28 = pins.gpio28.into_push_pull_output();
+
+    let mut ptr = 0;
     loop {
-        info!("on!");
-        led_pin.set_high().unwrap();
-        delay.delay_ms(500);
-        info!("off!");
-        led_pin.set_low().unwrap();
-        delay.delay_ms(500);
+        match ptr % 29 {
+            0 => {
+                gpio0.toggle();
+            }
+            1 => {
+                gpio1.toggle();
+            }
+            2 => {
+                gpio2.toggle();
+            }
+            3 => {
+                gpio3.toggle();
+            }
+            4 => {
+                gpio4.toggle();
+            }
+            5 => {
+                gpio5.toggle();
+            }
+            6 => {
+                gpio6.toggle();
+            }
+            7 => {
+                gpio7.toggle();
+            }
+            8 => {
+                gpio8.toggle();
+            }
+            9 => {
+                gpio9.toggle();
+            }
+            10 => {
+                gpio10.toggle();
+            }
+            11 => {
+                gpio11.toggle();
+            }
+            12 => {
+                gpio12.toggle();
+            }
+            13 => {
+                gpio13.toggle();
+            }
+            14 => {
+                gpio14.toggle();
+            }
+            15 => {
+                gpio15.toggle();
+            }
+            16 => {
+                gpio16.toggle();
+            }
+            17 => {
+                gpio17.toggle();
+            }
+            18 => {
+                gpio18.toggle();
+            }
+            19 => {
+                gpio19.toggle();
+            }
+            20 => {
+                gpio20.toggle();
+            }
+            21 => {
+                gpio21.toggle();
+            }
+            22 => {
+                gpio22.toggle();
+            }
+            23 => {
+                led.toggle();
+            }
+            26 => {
+                gpio26.toggle();
+            }
+            27 => {
+                gpio27.toggle();
+            }
+            28 => {
+                gpio28.toggle();
+            }
+            _ => (),
+        }
+        ptr+=1;
     }
 }
 
