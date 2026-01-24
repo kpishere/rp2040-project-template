@@ -1,26 +1,40 @@
 [package]
 authors = ["{{authors}}"] 
-name = "rp2040-project-template" 
+name = "rp2040_ads" 
 edition = "2024"
 version = "0.1.0"
 license = "MIT OR Apache-2.0"
 
-[[bin]]
-name = "rp2040-project-template" # "{{project-name}}" -> "app"
+[[example]]
+name = "pico_i2c"
+
+[[example]]
+name = "pico_ads"
+
+[lib]
+name = "rp2040_ads" # "{{project-name}}" -> "app"
+path = "src/lib.rs"
 test = false
 bench = false
 
 [dependencies]
 cortex-m = "0.7"
 cortex-m-rt = "0.7"
-embedded-hal = { version = "1.0.0" }
+embedded-hal = "1.0.0"
 
-defmt = "1"
-defmt-rtt = "1"
+defmt = "1.0.1"
+defmt-rtt = "1.1.0"
 panic-probe = { version = "1", features = ["print-defmt"] }
+
+bitfield-struct = "0.12"
+byteorder = { version = "1.5.0", default-features = false }
 
 # We're using a Pico by default on this template
 rp-pico = "0.9"
+fugit = "0.3.9"
+panic-halt = "1.0.0"
+embedded-graphics = "0.8.1"
+ssd1306 = "0.10.0"
 
 # but you can use any BSP. Uncomment this to use the pro_micro_rp2040 BSP instead
 # sparkfun-pro-micro-rp2040 = "0.8"
@@ -28,6 +42,8 @@ rp-pico = "0.9"
 # If you're not going to use a Board Support Package you'll need these:
 # rp2040-hal = { version="0.11", features=["rt", "critical-section-impl"] }
 # rp2040-boot2 = "0.3"
+
+[dev-dependencies]
 
 # cargo build/run
 [profile.dev]

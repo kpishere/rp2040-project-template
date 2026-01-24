@@ -7,7 +7,7 @@
             "request": "launch",
             "type": "cortex-debug",
             "cwd": "${workspaceRoot}",
-            "executable": "${workspaceFolder}/target/thumbv6m-none-eabi/debug/rp2040-project-template",
+            "executable": "${workspaceFolder}/target/thumbv6m-none-eabi/debug/examples/pico_ads",
             // Don't auto-run, building is so slow!
             //"preLaunchTask": "Build binary",
             "servertype": "openocd",
@@ -35,7 +35,7 @@
             ],
             // NOTE requires openOCD 0.11.0+
             "postLaunchCommands": [
-                "monitor rtt setup 0x00000030 0x30 \"SEGGER RTT\"",
+                "monitor rtt setup 0x20000008 0x30 \"SEGGER RTT\"",
                 "monitor rtt start",
                 "monitor rtt server start 8765 0",
                 // should span the *right* part of RAM

@@ -5,7 +5,7 @@
 runner = "probe-rs run --chip RP2040 --protocol swd"
 # runner = "elf2uf2-rs -d"
 
-linker = "flip-link"
+#--linker = "flip-link"
 rustflags = [
   "-C", "link-arg=--nmagic",
   "-C", "link-arg=-Tlink.x",
