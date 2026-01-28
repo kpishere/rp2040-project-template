@@ -83,7 +83,7 @@ impl<I2C> Ads1x15<I2C> {
     ///
     /// Uses the supplied I2C device.
     pub fn new_ads1015(device: I2C) -> Self {
-        let gain = Gain::Within6_144V;
+        let gain = Gain::Within4_096V;
         let model = Model::ADS1015;
 
         Ads1x15 {
@@ -97,7 +97,7 @@ impl<I2C> Ads1x15<I2C> {
     ///
     /// Uses the supplied I2C device.
     pub fn new_ads1115(device: I2C) -> Self {
-        let gain = Gain::Within6_144V;
+        let gain = Gain::Within4_096V;
         let model = Model::ADS1115;
 
         Ads1x15 {
@@ -146,11 +146,16 @@ where
         let mut write_buf = [reg::Register::Config as u8, 0u8, 0u8];
         byteorder::LittleEndian::write_u16(&mut write_buf[1..], config.into());
 
+        // Write configuration reg and trigger conversion
         self.device.write(addr, &write_buf).unwrap();
         //            .map_err(Error::InvalidWriteBufferLength)?;
 
         delay.delay_ms(self.model.conversion_delay().subsec_millis());
         //map_err(error::Error::Timer::<D>)?;
+
+        // Set reg pointer to conversion
+        let ptr_conversion = [0x00];
+        self.device.write(addr, &ptr_conversion).unwrap();
 
         let mut read_buf = [0u8, 0u8];
         self.device.read(addr, &mut read_buf).unwrap();

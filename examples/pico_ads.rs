@@ -47,7 +47,7 @@ use rp2040_ads::Channel;
 /// gets a handle on the I2C peripheral,
 /// initializes the SSD1306 driver, initializes the text builder
 /// and then draws some text on the display.
-#[entry]
+    #[entry]
 fn main() -> ! {
     // Grab our singleton objects
     let mut pac = pac::Peripherals::take().unwrap();
@@ -108,7 +108,34 @@ fn main() -> ! {
         let measurement = ads.read_single_ended(&mut delay, ADS_ADDR, Channel::A0);
 
         match measurement {
-            Ok(f) => defmt::println!("{:?}", f),
+            Ok(f) => defmt::println!("A0 {:?}", f),
+
+            Err(_) => defmt::println!("Err"),
+        }
+        delay.delay_ms(1_000);
+
+        let measurement = ads.read_single_ended(&mut delay, ADS_ADDR, Channel::A1);
+
+        match measurement {
+            Ok(f) => defmt::println!("A1 {:?}", f),
+
+            Err(_) => defmt::println!("Err"),
+        }
+        delay.delay_ms(1_000);
+
+        let measurement = ads.read_single_ended(&mut delay, ADS_ADDR, Channel::A2);
+
+        match measurement {
+            Ok(f) => defmt::println!("A2 {:?}", f),
+
+            Err(_) => defmt::println!("Err"),
+        }
+        delay.delay_ms(1_000);
+
+        let measurement = ads.read_single_ended(&mut delay, ADS_ADDR, Channel::A3);
+
+        match measurement {
+            Ok(f) => defmt::println!("A3 {:?}", f),
 
             Err(_) => defmt::println!("Err"),
         }
