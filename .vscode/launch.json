@@ -7,7 +7,7 @@
             "request": "launch",
             "type": "cortex-debug",
             "cwd": "${workspaceRoot}",
-            "executable": "${workspaceFolder}/target/thumbv6m-none-eabi/debug/rp2040-project-template",
+            "executable": "${workspaceFolder}/target/thumbv6m-none-eabi/debug/pico-spi-disp",
             // Don't auto-run, building is so slow!
             //"preLaunchTask": "Build binary",
             "servertype": "openocd",
@@ -35,12 +35,12 @@
             ],
             // NOTE requires openOCD 0.11.0+
             "postLaunchCommands": [
-                "monitor rtt setup 0x00000030 0x30 \"SEGGER RTT\"",
+                "monitor rtt setup 0x2003fbc0 0x30 \"SEGGER RTT\"",
                 "monitor rtt start",
                 "monitor rtt server start 8765 0",
                 // should span the *right* part of RAM
                 // use this at root of project to get this number:
-                //   rust-nm -S target/thumbv6m-none-eabi/debug/rp2040-project-template | grep _SEGGER_RTT
+                //   rust-nm -S target/thumbv6m-none-eabi/debug/pico-spi-disp | grep _SEGGER_RTT
                 //                "set print asm-demangle on",
                 //                "set backtrace limit 32",
                 //                "break DefaultHandler",
@@ -78,7 +78,7 @@
             "type": "cortex-debug",
             "servertype": "external",
             "gdbTarget": ":3333",
-            "executable": "${workspaceFolder}/target/thumbv6m-none-eabi/debug/rp2040-project-template",
+            "executable": "${workspaceFolder}/target/thumbv6m-none-eabi/debug/pico-spi-disp",
             "gdbPath": "/usr/local/bin/arm-none-eabi-gdb", // or gdb or multiarch-gdb
             "svdFile": "${env:PICO_SDK_PATH}/src/rp2040/hardware_regs/rp2040.svd",
         },
@@ -92,7 +92,7 @@
             "miDebuggerPath": "/usr/local/bin/arm-none-eabi-gdb",
             //"program": "${workspaceFolder}/RapidPatch/VulDevices/qemu-stm32-p103/build/arm-start.elf",
             //"cwd": "${workspaceRoot}",
-            "program": "${workspaceFolder}/target/thumbv7m-none-eabi/debug/rp2040-project-template", // Host machine not container, the exe/out file path
+            "program": "${workspaceFolder}/target/thumbv7m-none-eabi/debug/pico-spi-disp", // Host machine not container, the exe/out file path
         },
     ]
 }

@@ -1,39 +1,81 @@
 //! Blinks the LED on a Pico board
 //!
 //! This will blink an LED attached to GP25, which is the pin the Pico uses for the on-board LED.
+//! ref: https://pico.implrust.com/spi/spi-in-raspberry-pi-pico-2.html
+//!
 #![no_std]
 #![no_main]
 
-use bsp::entry;
+use cortex_m::prelude::_embedded_hal_blocking_spi_Write;
+// The macro for our start-up function
+use rp_pico::entry;
+
+// defmt debugging
 use defmt::*;
 use defmt_rtt as _;
-use embedded_hal::digital::OutputPin;
-use panic_probe as _;
 
-// Provide an alias for our BSP so we can switch targets quickly.
-// Uncomment the BSP you included in Cargo.toml, the rest of the code does not need to change.
-use rp_pico as bsp;
-// use sparkfun_pro_micro_rp2040 as bsp;
+// Ensure we halt the program on panic (if we don't mention this crate it won't
+// be linked)
+use panic_halt as _;
 
-use bsp::hal::{
-    clocks::{Clock, init_clocks_and_plls},
-    pac,
-    sio::Sio,
-    watchdog::Watchdog,
+// Timer for the delay on the display:
+use embedded_hal::{delay::DelayNs, digital::OutputPin};
+
+// A shorter alias for the Peripheral Access Crate, which provides low-level
+// register access
+// Pull in any important traits
+// Import the SPI abstraction:
+// Import the GPIO abstraction:
+
+use rp_pico::hal::{self, Clock, gpio, pac, prelude::*, spi};
+
+// Time handling traits:
+use fugit::RateExtU32;
+
+// Delay
+use cortex_m::delay::Delay;
+
+use core::{
+    clone::Clone, fmt, fmt::Debug, fmt::Error, marker::Copy, prelude::rust_2024::derive,
+    result::Result, time::Duration,
 };
+
+// External device
+use embedded_graphics::prelude::*;
+use embedded_graphics::text::Baseline;
+use embedded_graphics::{
+    mono_font::{MonoTextStyleBuilder, ascii::FONT_6X10},
+    pixelcolor::BinaryColor,
+    text::Text,
+};
+//use embedded_hal::digital::OutputPin;
+//use embedded_hal::digital::v2::OutputPin;
+//use embedded_time::{fixed_point::FixedPoint, rate::Extensions};
+
+/// Entry point to our bare-metal application.
+///
+/// The `#[entry]` macro ensures the Cortex-M start-up code calls this function
+/// as soon as all global variables are initialised.
+///
+/// The function configures the RP2040 peripherals,
+/// gets a handle on the I2C peripheral,
+/// initializes the SSD1306 driver, initializes the text builder
+/// and then draws some text on the display.
 
 #[entry]
 fn main() -> ! {
-    info!("Program start");
+    // Grab our singleton objects
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
-    let mut watchdog = Watchdog::new(pac.WATCHDOG);
-    let sio = Sio::new(pac.SIO);
 
-    // External high-speed crystal on the pico board is 12Mhz
-    let external_xtal_freq_hz = 12_000_000u32;
-    let clocks = init_clocks_and_plls(
-        external_xtal_freq_hz,
+    // Set up the watchdog driver - needed by the clock setup code
+    let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
+
+    // Configure the clocks
+    //
+    // The default is to generate a 125 MHz system clock
+    let clocks = hal::clocks::init_clocks_and_plls(
+        rp_pico::XOSC_CRYSTAL_FREQ,
         pac.XOSC,
         pac.CLOCKS,
         pac.PLL_SYS,
@@ -44,33 +86,43 @@ fn main() -> ! {
     .ok()
     .unwrap();
 
-    let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
+    // The single-cycle I/O block controls our GPIO pins
+    let sio = hal::Sio::new(pac.SIO);
 
-    let pins = bsp::Pins::new(
+    // Set the pins up according to their function on this particular board
+    let pins = rp_pico::Pins::new(
         pac.IO_BANK0,
         pac.PADS_BANK0,
         sio.gpio_bank0,
         &mut pac.RESETS,
     );
 
-    // This is the correct pin on the Raspberry Pico board. On other boards, even if they have an
-    // on-board LED, it might need to be changed.
-    //
-    // Notably, on the Pico W, the LED is not connected to any of the RP2040 GPIOs but to the cyw43 module instead.
-    // One way to do that is by using [embassy](https://github.com/embassy-rs/embassy/blob/main/examples/rp/src/bin/wifi_blinky.rs)
-    //
-    // If you have a Pico W and want to toggle a LED with a simple GPIO output pin, you can connect an external
-    // LED to one of the GPIO pins, and reference that pin here. Don't forget adding an appropriate resistor
-    // in series with the LED.
-    let mut led_pin = pins.led.into_push_pull_output();
+    // Device driver wants to delay in write/read cycle
+    let mut delay = Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
+
+    // Configure two pins as being I²C, not GPIO
+    let spi_clk = pins.gpio10.into_function::<hal::gpio::FunctionSpi>();
+    let spi_tx = pins.gpio11.into_function::<hal::gpio::FunctionSpi>();
+    let mut led_latch = pins.gpio15.into_push_pull_output();
+    let mut spi_bus = hal::spi::Spi::<_, _, _, 8>::new(pac.SPI1, (spi_tx, spi_clk)).init(
+        &mut pac.RESETS,
+        clocks.peripheral_clock.freq(),
+        16.MHz(),
+        embedded_hal::spi::MODE_0,
+    );
+
+    let mut data = [0x80u8, 0x00u8, 0x80u8];
 
     loop {
-        info!("on!");
-        led_pin.set_high().unwrap();
-        delay.delay_ms(500);
-        info!("off!");
-        led_pin.set_low().unwrap();
-        delay.delay_ms(500);
+        data[0] = data[0].rotate_left(1);
+        data[2] = data[2].rotate_left(3);
+        defmt::println!("{:?}", &data);
+
+        led_latch.set_high().unwrap();
+        let _ = spi_bus.write(&data).is_ok();
+        led_latch.set_low().unwrap();
+
+        delay.delay_ms(1_000);
     }
 }
 
