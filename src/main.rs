@@ -112,17 +112,18 @@ fn main() -> ! {
     );
 
     let mut data = [0x80u8, 0x00u8, 0x80u8];
-
+    let mut count = 0u32;
     loop {
-        data[0] = data[0].rotate_left(1);
-        data[2] = data[2].rotate_left(3);
+        data[0] = data[0].rotate_left(count/8);
+        data[2] = data[2].rotate_left(count);
         defmt::println!("{:?}", &data);
 
         led_latch.set_high().unwrap();
         let _ = spi_bus.write(&data).is_ok();
         led_latch.set_low().unwrap();
 
-        delay.delay_ms(1_000);
+        count = count + 1;
+        delay.delay_ms(1);
     }
 }
 
